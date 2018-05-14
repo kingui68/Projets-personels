@@ -1,0 +1,7 @@
+ camllex lexer.mll
+ camlyacc parser.mly
+ camlc -c parser.mli
+ camlc -c lexer.ml
+ camlc -c parser.ml
+ camlc -c stf.ml
+ camlc -o stf lexer.zo parser.zo stf.zo

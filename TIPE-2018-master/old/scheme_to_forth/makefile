@@ -1,0 +1,13 @@
+all:
+	camllex lexer.mll
+	camlyacc parser.mly
+	camlc -c parser.mli
+	camlc -c lexer.ml
+	camlc -c parser.ml
+	camlc -c stf.ml
+	camlc -o stf lexer.zo parser.zo stf.zo
+
+clean:
+	rm parser.ml parser.mli parser.zi parser.zo
+	rm lexer.ml lexer.zi lexer.zo 
+	rm stf.zi stf.zo

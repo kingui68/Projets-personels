@@ -1,0 +1,9 @@
+﻿L'informatique se donne notamment pour but d'exécuter des algorithmes de façon automatique.
+On aimerait également pouvoir écrire les algorithmes dans un langage facilement compréhensible par l'homme.
+Malheureusement les machines pouvant exécuter des programmes ne comprennent qu'un seul type de langage, les "langages physiques" appelées pour cette raison les langages machines.
+Il apparaît donc le besoin d'être capable de traduire les instructions d'un langage à un autre. [2]
+C'est exactement le rôle du compilateur : "un compilateur est un programme qui lit un programme écrit dans un premier langage – le langage source – et le traduit en un programme équivalent écrit dans un autre langage – le langage cible » [1].
+Bien qu'il puisse avoir d'autres utilités (comme la détection d'erreur dans un programme), c'est surtout son rôle de traducteur qui nous intéresse.
+La compilation est un sujet déjà balisé bien qu'il soit toujours actualité, les informaticiens ayant déjà mis en évidence un processus-type et des méthodes pour la compilation.
+Ces méthodes sont décrites dans Structure et interprétation des programmes informatiques [1] ainsi que dans Compilateurs : principes, techniques et outils [2].
+Pour notre mise en pratique il nous a fallu choisir un langage source et un langage cible. Nous nous sommes tournés vers Scheme pour le langage source, décrit et analysé dans Structure et interprétation des programmes informatiques [1] et vers Forth pour le langage cible.
