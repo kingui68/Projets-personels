@@ -1,16 +1,16 @@
 (* Principes :
-On souhaite identifier les lexèmes d'une chaine de charactères.
-Tout ces lexèmes peuvent être décrits par des expressions rationnelles et sont donc reconnaissables par des automates déterministes.
-Dans un premier temps un construit un arbre pour chacune de ces expressions rationnelles.
-Ensuite on réalise l'automate produit (non déterministe). Plus précisément on simule la construction d'un automate produit pour éviter de construire tous les états. Dans les faits, on fait fonctionner tous les automates en parallèles sur la chaîne de charactères et on s'arrête juste avant que tous les automates ne bloquent. 
-On a alors la liste des automates qui reconnaissent le plus long lexème, il suffit alors de définir un ordre de priorité pour choisir l'action.
-Ici l'ordre est défini par l'ordre d'apparition des automates dans l'automate produit.
-(ex : let peut être considéré comme le mot clé let ou l'identifiant let)
- *)  
+On souhaite identifier les lexÃ¨mes d'une chaine de charactÃ¨res.
+Tout ces lexÃ¨mes peuvent Ãªtre dÃ©crits par des expressions rationnelles et sont donc reconnaissables par des automates dÃ©terministes.
+Dans un premier temps on construit un arbre pour chacune de ces expressions rationnelles.
+Ensuite on rÃ©alise l'automate produit (non dÃ©terministe). Plus prÃ©cisÃ©ment on simule la construction d'un automate produit pour Ã©viter de construire tous les Ã©tats. Dans les faits, on fait fonctionner tous les automates en parallÃ¨les sur la chaÃ®ne de charactÃ¨res et on s'arrÃªte juste avant que tous les automates ne bloquent. 
+On a alors la liste des automates qui reconnaissent le plus long lexÃ¨me, il suffit alors de dÃ©finir un ordre de prioritÃ© pour choisir l'action.
+Ici l'ordre est dÃ©fini par l'ordre d'apparition des automates dans l'automate produit.
+(ex : let peut Ãªtre considÃ©rÃ© comme le mot clÃ© let ou l'identifiant let)
+ *)
 
-(* La fonction finale est analyse_lexicale qui prend un mot sous forme de chaîne de charactères et retourne la liste des lexèmes *)
+(* La fonction finale est analyse_lexicale qui prend un mot sous forme de chaÃ®ne de charactÃ¨res et retourne la liste des lexÃ¨mes *)
 
-(* Pour que cette analyse lexicale reconnaisse de nouveaux mots clés, et avec la bonne priorité il suffit de les rajouter au bon endroit dans le tableau keyword *)
+(* Pour que cette analyse lexicale reconnaisse de nouveaux mots clÃ©s, et avec la bonne prioritÃ© il suffit de les rajouter au bon endroit dans le tableau keyword *)
 
 
 
@@ -19,27 +19,37 @@ Ici l'ordre est défini par l'ordre d'apparition des automates dans l'automate pr
 
 (* DEFINITIONS *)
 
+type lexeme =
+   NB (* nombres *)
+   | ID (* identifiants, variables *)
+   | OP (* opÃ©rateurs usuels : +, -, *, / *)
+   | DEF (* define *)
+   | LPAR (* ( *)
+   | RPAR (* ) *)
+   | EOF
+;;
+
 let lettres = [`a`; `b`; `c`; `d`; `e`; `f`; `g`; `h`; `i`; `j`; `k`; `l`; `m`; `n`; `o`; `p`; `q`; `r`; `s`; `t`; `u`; `v`; `w`; `x`; `y`; `z`; `A`; `B`; `C`; `D`; `E`; `F`; `G`; `H`; `I`; `J`; `K`; `L`; `M`; `N`; `O`; `P`; `Q`; `R`; `S`; `T`; `U`; `V`; `W`; `X`; `Y`; `Z`]
 ;;
-let chiffres = [`1`; `2`; `3`; `4`; `5`; `6`; `7`; `8`; `9`]
+let chiffres = [`0`; `1`; `2`; `3`; `4`; `5`; `6`; `7`; `8`; `9`]
 ;;
 let char_spe = [`?`; `!`; `.`; `+`; `-`; `*`; `/`; `<`; `=`; `>`; `;`; `$`; `%`; `^`; `&`; `_`; `~`; `@`] 
 ;;
-(* sigma est l'alphabet composé des charactères acceptés par scheme *)
+(* sigma est l'alphabet composÃ© des charactÃ¨res acceptÃ©s par scheme *)
 let sigma = lettres @ chiffres @ char_spe
 ;;
 (* Tableau des mots_clefs reconnus *)
-let keyword = [|"define";"(";")";"set";"if";"then";"else"|]
+let keyword = [|(DEF,"define");(LPAR,"(");(RPAR,")")|]
 ;;
 let operations = [`+`; `-`; `*`; `/`]
 ;;
-(* type d'automates finis déterministe
-Note : le nombre d'état n'est pas très utile, on peut l'avoir avec la longueur de finals... mais je préfère faire ainsi *)
+(* type d'automates finis dÃ©terministe
+Note : le nombre d'Ã©tat n'est pas trÃ¨s utile, on peut l'avoir avec la longueur de finals... mais je prÃ©fÃ¨re faire ainsi *)
 type automate = {
-      etats: int; (* etats représentent le nombre d'états, ils sont représentés par les entiers [0,...,etats -1] *)
+      etats: int; (* etats reprÃ©sentent le nombre d'Ã©tats, ils sont reprÃ©sentÃ©s par les entiers [0,...,etats -1] *)
       transition: int -> char -> int;
-      finals: bool vect ;(* finals.[i] contient true si i est un état final, false sinon *)
-      lexeme : string (* représente l'"action" : permet d'associer le nom du lexème *)
+      finals: bool vect ;(* finals.[i] contient true si i est un Ã©tat final, false sinon *)
+      lexeme : lexeme (* reprÃ©sente l'"action" : permet d'associer le nom du lexÃ¨me *)
    }
 ;;
 
@@ -55,7 +65,7 @@ type automate = {
 (* FONCTIONS AUXILIAIRES *)
 
 
-(* affiche le vecteur d'entiers donner en argument *)
+(* affiche le vecteur d'entiers donnÃ© en argument *)
 let print_vect t =
    print_string "[|";
    do_vect (fun x -> begin print_int x; print_string "; " end) t;
@@ -63,11 +73,11 @@ let print_vect t =
 ;;
 
 (* prefixe s t renvoie true si s est un prefixe de t, false sinon
-note : cette fonction s'avère inutile *)
+note : cette fonction s'avÃ¨re inutile *)
 let prefixe s t = compare_strings s t = - 2
 ;;
 
-(* split u retourne la liste des charactères de u apparaissant dans l'ordre *)
+(* split u retourne la liste des charactÃ¨res de u apparaissant dans l'ordre *)
 let split u =
    let n = string_length u in
    let l = ref [] in
@@ -77,7 +87,7 @@ let split u =
    rev !l
 ;;
 
-(* reconnait A u retourne true si l'automate A reconnait le mot u (sous forme de chaîne de charactères)
+(* reconnait A u retourne true si l'automate A reconnait le mot u (sous forme de chaÃ®ne de charactÃ¨res)
 Utile uniquement pour la programmation *)
 let reconnait A u =
    let delta = A.transition in
@@ -90,26 +100,26 @@ let reconnait A u =
    in aux l 0
 ;;
 
-(* sépare la chaine u donnée en argument à chaque espace, transforme ces sous-chaînes en listes (via split) et en retourne la liste dans l'ordre de leur apparition dans u *)
+(* sÃ©pare la chaine u donnÃ©e en argument Ã  chaque espace, transforme ces sous-chaÃ®nes en listes (via split) et en retourne la liste dans l'ordre de leur apparition dans u *)
 let strip u =
    let l = split u in
-   let res = ref [] in
-   let rec aux l acc = match l with
-         | [] -> res := acc :: (!res)
-         | x :: r when x = ` ` or x = `\t` or x = `\n` ->
-               begin res := acc :: (!res); aux r [] end
-         | x :: r -> aux r (x :: acc)
-   in aux l [];
-   rev (map rev !res)
+      let res = ref [] in
+         let rec aux l acc = match l with
+               | [] -> res := acc :: (!res)
+               | x :: r when x = ` ` or x = `\t` or x = `\n` ->
+                     begin res := acc :: (!res); aux r [] end
+               | x :: r -> aux r (x :: acc)
+         in aux l [];
+            rev (map rev !res)
 ;;
 (* Exemples : 
 strip "fbdgd769\tzrr\nresf" ;;
 strip "988**^ uhqa/\t" ;; 
 *)
 
-(* map_vect2 est similaire à map2 pour les listes :
+(* map_vect2 est similaire Ã  map2 pour les listes :
 map_vect2 f [|a1; ...; an|] [|b1; ...; bn|] is [|f a1 b1; ...; f an bn|]
-Ne marche que si les deux tableaux en argument ont la même longueur *)
+Ne marche que si les deux tableaux en argument ont la mÃªme longueur *)
 let map_vect2 f t u =
    if t = [||] then [||]
    else let n = vect_length t in
@@ -124,17 +134,17 @@ let map_vect2 f t u =
 let exists_vect p t = exists p (list_of_vect t)
 ;;
 
-(* enleve l i retourne la liste l privé de ses i premiers éléments *)
+(* enleve l i retourne la liste l privÃ© de ses i premiers Ã©lÃ©ments *)
 let rec enleve l i = match l with
       | [] -> if i != 0 then failwith "trop d'elements a enleve" else l
       | _ :: r -> if i = 0 then l else enleve r (i - 1)
 ;;
 
-(* aplatir prend une liste de liste en argument et retourne une liste obtenu par concaténation de ses éléments en conservant l'ordre *)
+(* aplatir prend une liste de liste en argument et retourne une liste obtenu par concatÃ©nation de ses Ã©lÃ©ments en conservant l'ordre *)
 let aplatir liste = it_list (prefix @) [] liste
 ;;
 
-(* suj l i j renvoie la sous_liste composée des éléments des indices i à j-1 *)
+(* suj l i j renvoie la sous_liste composÃ©e des Ã©lÃ©ments des indices i Ã  j-1 *)
 let rec sub l i j = match l with
       | [] -> if not (i = 0 && j = 0) then failwith "trop d'elements a enlever" else []
       | x :: r -> if i != 0 then sub r (i - 1) (j - 1)
@@ -142,7 +152,9 @@ let rec sub l i j = match l with
             else x :: (sub r i (j - 1))
 ;;
 
-(* équivalent de index pour les tableaux *)
+(* Ã©quivalent de index pour les tableaux *)
+
+(* PremiÃ¨re version qui pose problÃ¨me...
 let index_vect t a =
    let n = vect_length t in
    let i = ref 0 in
@@ -152,7 +164,19 @@ let index_vect t a =
    if t.(!i) != a then failwith "l'element n'est pas dans le tableau"
    else !i
 ;;
+*)
 
+(* DeuxiÃ¨me version proposÃ©e par Nestor *)
+let index_vect2 t a =
+  let n = vect_length t in
+  let ind = ref 0 in
+  for i = 1 to n
+  do
+    if t.(n-i) = a then ind := (n-i)
+  done;
+  if t.(!ind) = a then !ind
+  else failwith "element absent du tableau" 
+    ;;
 
 
 
@@ -176,10 +200,10 @@ let trans_id q a =
 (* automate reconnaissant les identifiants i.e. les noms de variables.
 Ils sont de la forme lettres.(sigma)* *)
 let id = {
-      etats = 1;
+      etats = 2;
       transition = trans_id;
       finals = [|false; true|] ;
-      lexeme = "ID"
+      lexeme = ID
    }
 ;;
 
@@ -197,17 +221,17 @@ let ch = mem a chiffres in
 ;;
 
 (* automate reconnaissant les nombres de scheme. 
-Plus précisément un nombre est de la forme :
+Plus prÃ©cisÃ©ment un nombre est de la forme :
  (- + eps).chiffres.chiffres*.(`.` + eps).chiffres*
  ou (- + eps).`.`chiffres.chiffres*
- avec eps le mot vide et . la concaténation.
- Autrement dit les nombres peuvent etre précédé d'un - et à virgule (noté . ).
+ avec eps le mot vide et . la concatÃ©nation.
+ Autrement dit les nombres peuvent etre prÃ©cÃ©dÃ© d'un - et Ã  virgule (notÃ© . ).
  Les nombres 42. et .42 sont reconnus mais pas . *)
 let nb = {
       etats = 7;
       transition = trans_nb;
       finals = [|false; false; false; true; true; true; true|] ;
-      lexeme = "NB"
+      lexeme = NB
    }
 ;;
 (* Exemples :
@@ -224,22 +248,22 @@ reconnait nb "-8845f846";; *)
 
 
 
-(* fonction de transition de l'automate associé au langage {u} *)
+(* fonction de transition de l'automate associÃ© au langage {u} *)
 let trans_mot u q a =
 let n = string_length u in 
    if q != -1 && q != (n) && u.[q] = a then q+1
    else - 1
 ;;
 
-(* construit l'automate reconnaissant uniquement le mot u *)
-let mk_auto_mot mot =
-   let n = string_length mot in
+(* construit l'automate reconnaissant uniquement le mot_clÃ© u *)
+let mk_auto_mot keywd =
+   let n = string_length (snd keywd) in
    let t = make_vect (n + 1) false in
    t.(n) <- true;
    {etats = n + 1;
-      transition = trans_mot mot;
+      transition = trans_mot (snd keywd);
       finals = t;
-      lexeme = "KEYWD"
+      lexeme = fst keywd
    }
 ;;
 
@@ -249,17 +273,17 @@ let trans_op q a =
    else - 1
 ;;
 
-(* automate reconnaissant les 4 opérations élémentaires *)
+(* automate reconnaissant les 4 opÃ©rations Ã©lÃ©mentaires *)
 let op = {
       etats = 2;
       transition = trans_op;
       finals = [|false; true|];
-      lexeme = "OP"
+      lexeme = OP
    }
 ;;
 
 
-(* crée l' "automate produit" global A_vect : les automates sont rangés par ordre de priorité *)
+(* crÃ©e l' "automate produit" global A_vect : les automates sont rangÃ©s par ordre de prioritÃ© *)
 let longueur_keywd = vect_length keyword ;; 
 let A_vect = make_vect (longueur_keywd+3) id 
 ;;
@@ -271,7 +295,7 @@ A_vect.(n) <- op ;
 A_vect.(n+1) <- id ;
 A_vect.(n+2) <- nb 
 ;;
-
+A_vect;;
 
 
 
@@ -284,7 +308,7 @@ A_vect.(n+2) <- nb
 (* FONCTIONS PRINCIPALES *)
 
 
-(* trans_all prend en argument un tableau d'automates et un tableau d'états et retourne le tableau des états dans lequel chacun des automates se trouve après la transition à partir de l'état correspondant par a *)
+(* trans_all prend en argument un tableau d'automates et un tableau d'Ã©tats et retourne le tableau des Ã©tats dans lequel chacun des automates se trouve aprÃ¨s la transition Ã  partir de l'Ã©tat correspondant par a *)
 let trans_all A_vect q_vect a =
    map_vect2 (fun A q -> if q != -1 then A.transition q a else -1) A_vect q_vect
 ;;
@@ -292,21 +316,21 @@ let trans_all A_vect q_vect a =
 
 
 (* fonction magique :
-u est un mot "découpé" (par split par exemple) donc une liste de charactères
-anallex_lst retourne la liste des couples (reconnait,i) où 
-- reconnait est un tableau indiquant pour chaque automate de A_vect si il reconnait ce lexème ;
-- i est la longueur du lexème reconnu
-Note : les lexèmes reconnus sont les plus longs qu'il était possible de reconnaitre *)
+u est un mot "dÃ©coupÃ©" (par split par exemple) donc une liste de charactÃ¨res
+anallex_lst retourne la liste des couples (reconnait,i) oÃ¹ 
+- reconnait est un tableau indiquant pour chaque automate de A_vect si il reconnait ce lexÃ¨me ;
+- i est la longueur du lexÃ¨me reconnu
+Note : les lexÃ¨mes reconnus sont les plus longs qu'il Ã©tait possible de reconnaitre *)
 let anallex_mot u =
 
    let l = ref u in
    let n = vect_length A_vect in
-   let q_vect = make_vect n 0 in (* q_vect.(i) est l'état de l'automate numéro i *)
+   let q_vect = make_vect n 0 in (* q_vect.(i) est l'Ã©tat de l'automate numÃ©ro i *)
    let res = ref [] in
-   (* lex effectue la lecture du charactère suivant:
-   - i est le nombre de charactère lu jusqu'à présent, utile car on veut connaitre la longueur du  mot reconnu
+   (* lex effectue la lecture du charactÃ¨re suivant:
+   - i est le nombre de charactÃ¨re lu jusqu'Ã  prÃ©sent, utile car on veut connaitre la longueur du  mot reconnu
 - s est le mot que l'on est en train de lire 
- - flag vaut true si l'étape précédente était la dernière possible : il permet de sortir *)
+ - flag vaut true si l'Ã©tape prÃ©cÃ©dente Ã©tait la derniÃ¨re possible : il permet de sortir *)
    let rec lex q_vect i s flag =
       if flag then q_vect, (i - 1)
       else match s with
@@ -321,7 +345,7 @@ let anallex_mot u =
                      if exists_vect (fun x -> x != - 1) suiv then lex suiv (i + 1) r false
                      else lex q_vect (i + 1) r true end
    in
-   (* on reconnait le premier lexème de la chaine puis on l'enlève et on recommence jusqu'à ce que la liste soit vide *)
+   (* on reconnait le premier lexÃ¨me de la chaine puis on l'enlÃ¨ve et on recommence jusqu'Ã  ce que la liste soit vide *)
    while !l != [] do
       let q_vect', i = lex q_vect 0 !l false in
       res := (q_vect', i) :: (!res);
@@ -332,22 +356,22 @@ let anallex_mot u =
    in
    map (map2_first (fun A q -> (q != - 1) && A.finals.(q)) A_vect) (!res)
 ;;
-(* anallex découpe la chaine donnée en argument en mot avec strip puis retourne la liste des application de anallex_mot sur chaque mot obtenus *)
+(* anallex dÃ©coupe la chaine donnÃ©e en argument en mot avec strip puis retourne la liste des application de anallex_mot sur chaque mot obtenus *)
 let anallex chaine =
    let liste = strip chaine in
    map (fun l -> rev (anallex_mot l)) liste
 ;;
 
-(* Traitement a pour but de transformer le résultat de anallex à l'aide de la chaine initiale pour obtenir une liste de lexèmes. 
-Pour chaque lexèmes on a sa longueur ainsi qu'un tableau des automates le reconnaissant, on prend le premier de celui-ci considéré comme prioritaire puis on associe le lexème de l'automate à la chaine correspondante (que l'on peut retrouver grâce à sa longueur.
-On fait alors une liste de tous ces couples (lexèmes , chaîne) *)
+(* Traitement a pour but de transformer le rÃ©sultat de anallex Ã  l'aide de la chaine initiale pour obtenir une liste de lexÃ¨mes. 
+Pour chaque lexÃ¨mes on a sa longueur ainsi qu'un tableau des automates le reconnaissant, on prend le premier de celui-ci considÃ©rÃ© comme prioritaire puis on associe le lexÃ¨me de l'automate Ã  la chaine correspondante (que l'on peut retrouver grÃ¢ce Ã  sa longueur.
+On fait alors une liste de tous ces couples (lexÃ¨mes , chaÃ®ne) *)
 let traitement liste chaine =
    let l = aplatir liste in
    let u = aplatir chaine in
    let rec aux l j = match l with
          | [] -> []
          | x :: r -> begin let vect_q, i = x in
-                  let k = index_vect vect_q true in
+                  let k = index_vect2 vect_q true in
                   let lexeme = A_vect.(k).lexeme in
                   let s = create_string i in
                   let ss_liste = sub u j (j + i) in
@@ -355,17 +379,17 @@ let traitement liste chaine =
                   do_list (fun x -> s.[!c] <- x; c := !c + 1) ss_liste;
                   (lexeme, s) :: (aux r (j + i))
                end
-   in aux l 0
+   in aux l 0 @ [EOF,"$"]
 ;;
 
-(* FONCTION FINALE : Réalise l'analyse lexicale de la chaîne de charactères donnée en argument *)
+(* FONCTION FINALE : RÃ©alise l'analyse lexicale de la chaÃ®ne de charactÃ¨res donnÃ©e en argument *)
 let analyse_lexicale chaine =
    traitement (anallex chaine) (strip chaine)
 ;;
-(* Exemple : 
-let chaîne =  "(define ab (+ 5 3))" ;;
-analyse_lexicale chaîne ;;
-*)
+(* Exemple : *) 
+let chaÃ®ne =  "(define ab (+ 5 3))(define ab (+ 5 3))(define ab (+ 5 3))(define ab (+ 5 3))" ;;
+analyse_lexicale chaÃ®ne ;;
+ 
 
 
 

@@ -1,7 +1,9 @@
-(* Principes :
+
+
+(* Principes
 On souhaite identifier les lexèmes d'une chaine de charactères.
 Tout ces lexèmes peuvent être décrits par des expressions rationnelles et sont donc reconnaissables par des automates déterministes.
-Dans un premier temps un construit un arbre pour chacune de ces expressions rationnelles.
+Dans un premier temps un construit un arbre pour chacune de ces expressions rationnelles.C
 Ensuite on réalise l'automate produit (non déterministe). Plus précisément on simule la construction d'un automate produit pour éviter de construire tous les états. Dans les faits, on fait fonctionner tous les automates en parallèles sur la chaîne de charactères et on s'arrête juste avant que tous les automates ne bloquent. 
 On a alors la liste des automates qui reconnaissent le plus long lexème, il suffit alors de définir un ordre de priorité pour choisir l'action.
 Ici l'ordre est défini par l'ordre d'apparition des automates dans l'automate produit.
@@ -21,22 +23,26 @@ Ici l'ordre est défini par l'ordre d'apparition des automates dans l'automate pr
 
 let lettres = [`a`; `b`; `c`; `d`; `e`; `f`; `g`; `h`; `i`; `j`; `k`; `l`; `m`; `n`; `o`; `p`; `q`; `r`; `s`; `t`; `u`; `v`; `w`; `x`; `y`; `z`; `A`; `B`; `C`; `D`; `E`; `F`; `G`; `H`; `I`; `J`; `K`; `L`; `M`; `N`; `O`; `P`; `Q`; `R`; `S`; `T`; `U`; `V`; `W`; `X`; `Y`; `Z`]
 ;;
-let chiffres = [`1`; `2`; `3`; `4`; `5`; `6`; `7`; `8`; `9`]
+let chiffres = [`1`; `2`; `3`; `4`; `5`; `6`; `7`; `8`; `9`; `0`] (* EDIT NESTOR : il manquait le zero, je l'ai rajouté *)
 ;;
-let char_spe = [`?`; `!`; `.`; `+`; `-`; `*`; `/`; `<`; `=`; `>`; `;`; `$`; `%`; `^`; `&`; `_`; `~`; `@`] 
+let char_spe = [`?`; `!`; `.`; `+`; `-`; `*`; `/`; `<`; `=`; `>`; `;`; `$`; `%`; `^`; `&`; `_`; `~`; `@`] (* EDIT NESTOR : je sais pas si on doit mettre ou pas la virgule *)
+(* EDIT GUILLAUME : Cette liste est en réalité la liste des charactères qui peuvent apparaître dans un nom de variable. Je l'ai récupéré sur wikipédia... La virgule par exemple ne fait donc pas partie de cette liste. *)
 ;;
 (* sigma est l'alphabet composé des charactères acceptés par scheme *)
 let sigma = lettres @ chiffres @ char_spe
 ;;
 (* Tableau des mots_clefs reconnus *)
-let keyword = [|"define";"(";")";"set";"if";"then";"else"|]
+let keyword = [|"define";"(";")";"set";"if";"then";"else"|]  (* EDIT NESTOR : je ne comprends pas pourquoi on doit utiliser un vect au lieu d'un list ici, ca doit
+                                                                etre pour la suite que je n'ai pas encore lue ^^ *)
+(* EDIT GUILLAUME : leur nombre n'est pas très grand donc la place en mémoire n'est pas très problématique... Les fonctions étaient juste plus simple à écrire avec un tableau ^^ *)
+	       
 ;;
 let operations = [`+`; `-`; `*`; `/`]
 ;;
-(* type d'automates finis déterministe
-Note : le nombre d'état n'est pas très utile, on peut l'avoir avec la longueur de finals... mais je préfère faire ainsi *)
+(* type d'automates finis déterministes
+Note : le nombre d'états n'est pas très utile, on peut l'avoir avec la longueur de finals... mais je préfère faire ainsi *)
 type automate = {
-      etats: int; (* etats représentent le nombre d'états, ils sont représentés par les entiers [0,...,etats -1] *)
+      etats: int; (* etats représente le nombre d'états, ils sont représentés par les entiers [0,...,etats -1] *)
       transition: int -> char -> int;
       finals: bool vect ;(* finals.[i] contient true si i est un état final, false sinon *)
       lexeme : string (* représente l'"action" : permet d'associer le nom du lexème *)
@@ -64,8 +70,10 @@ let print_vect t =
 
 (* prefixe s t renvoie true si s est un prefixe de t, false sinon
 note : cette fonction s'avère inutile *)
-let prefixe s t = compare_strings s t = - 2
-;;
+let prefixe s t = compare_strings s t = - 2  (* EDIT NESTOR : compare_strings est une fonction de base Caml ? *)
+;;                                           (* RE-EDIT NESTOR : c'est bon guillaume m'a expliqué ! *)
+                                             (* RE-RE-EDIT NESTOR : et puis de toute facon on s'en sert pas bezef *)
+
 
 (* split u retourne la liste des charactères de u apparaissant dans l'ordre *)
 let split u =
@@ -77,19 +85,42 @@ let split u =
    rev !l
 ;;
 
+
+(* EDIT NESTOR : *)
+(* split_rec u fait la même chose que split u mais en récursif, je sais pas si c'est mieux ... *)
+(* EDIT GUILLAUME : Futé, mais honnêtement je ne pense pas que ce soit très important *) 
+let split_rec u =
+  let n = string_length u in
+  let rec split_aux u i =
+    if i = n then []
+    else u.[i] :: (split_aux u (i+1))
+  in split_aux u 0
+;;
+
+(* EDIT NESTOR : J'ai juste mis un peu en forme la fonction parce que j'arrivais pas à lire à cause de mon écran et de mes yeux pourris xD *)
 (* reconnait A u retourne true si l'automate A reconnait le mot u (sous forme de chaîne de charactères)
 Utile uniquement pour la programmation *)
 let reconnait A u =
    let delta = A.transition in
    let l = split u in
-   let rec aux l q = match l with
-         | [] -> not (q = - 1) && begin try A.finals.(q) with
-                  | nth_char -> false end
-         | x :: r -> let q' = delta q x in
-               not (q' = - 1) && aux r q'
+   let rec aux l q =
+     match l with
+     | [] -> not (q = - 1) &&
+	begin try A.finals.(q) with
+	| nth_char -> false
+	end
+     | x :: r -> let q' = delta q x in
+		 not (q' = - 1) && aux r q'
    in aux l 0
 ;;
 
+(* EDIT NESTOR : si on met deux espaces ou deux séparations à la suite, ca crée des sous-chaines vides ... et du coup des listes de caractères vides, c'est grave ? *)
+(* EDIT GUILLAUME : en effet cela crée des listes vides mais cela n'a aucune importance... (notamment pour la complexité) *)
+(* RE-EDIT NESTOR : ne vaudrait-il pas mieux utiliser une liste de caractères séparant ? genre pour inclure le point-virgule ou la virgule ? *)
+(* Ceux qu j'ai mis sont les seules autorisées en Scheme normalement... pas de virgule ou de points-virgules comme séparateurs en Scheme. Il est cependant possible (mais vraisemblablement inutile) soit d'enlever les listes vides après, soit de construire un automate reconnaissant les concaténations de séparateurs  (genre "\t  \n") *)
+(* EDIT GUILLAUME : J'ai néanmoins omis de reconnaitre et d'enlever les commentaires Scheme (qui sont ils me semblent de la forme : ; ... \n) mais ce n'est sans doute pas prioritaire *)
+(* RE-RE-EDIT NESTOR : il me semblait que toutes ces fonctions étaient déjà implantées dans split_string.ml sur le Github, elles n'allaient pas avec les automates ? *)
+(* EDIT GUILLAUME : tu as sans doute raison, mais comme j'ai oublié ce qu'on avait déjà fait, je les ai réécrite "from scratch" *)
 (* sépare la chaine u donnée en argument à chaque espace, transforme ces sous-chaînes en listes (via split) et en retourne la liste dans l'ordre de leur apparition dans u *)
 let strip u =
    let l = split u in
@@ -126,7 +157,7 @@ let exists_vect p t = exists p (list_of_vect t)
 
 (* enleve l i retourne la liste l privé de ses i premiers éléments *)
 let rec enleve l i = match l with
-      | [] -> if i != 0 then failwith "trop d'elements a enleve" else l
+      | [] -> if i != 0 then failwith "trop d'elements a enlever" else l
       | _ :: r -> if i = 0 then l else enleve r (i - 1)
 ;;
 
@@ -134,15 +165,21 @@ let rec enleve l i = match l with
 let aplatir liste = it_list (prefix @) [] liste
 ;;
 
-(* suj l i j renvoie la sous_liste composée des éléments des indices i à j-1 *)
+(* sub l i j renvoie la sous_liste composée des éléments des indices i à j-1 *)
 let rec sub l i j = match l with
       | [] -> if not (i = 0 && j = 0) then failwith "trop d'elements a enlever" else []
       | x :: r -> if i != 0 then sub r (i - 1) (j - 1)
-            else if i = 0 && j = 0 then []
-            else x :: (sub r i (j - 1))
+        else if i = 0 && j = 0 then []  (* EDIT NESTOR : ici le "i = 0" ne sert a  rien *)
+(* EDIT GUILLAUME : effectivement c'est une trace de l'ancien algo que j'ai oublié de modifié *)
+        else x :: (sub r i (j - 1))
 ;;
 
 (* équivalent de index pour les tableaux *)
+(* EDIT NESTOR : dans index on met d'abord l'élément puis la liste, donc ce serait plus index_vect a t ... je chipote *)
+(* EDIT NESTOR : chez moi index_vect ne fonctionne pas, il me sort une erreur vect_item, comme si tu essayais de chercher hors du tableau *)
+(* EDIT NESTOR : j'ai trouvé l'erreur quand tu sors de la boucle, ton i peut valoir n et donc t.(!i) est hors du tableau *)
+(* EDIT NESTOR : je ne comprends pas, il me sort cette erreur qu'avec un string_vect et pas avec d'autres types ... *)
+(* EDIT GUILLAUME : j'ai eu quelques problèmes avec cette fonction... j'ai essayer de bidouiller tous mes indices et il me semble que cela marchait au final *)
 let index_vect t a =
    let n = vect_length t in
    let i = ref 0 in
@@ -152,10 +189,18 @@ let index_vect t a =
    if t.(!i) != a then failwith "l'element n'est pas dans le tableau"
    else !i
 ;;
-
-
-
-
+(* EDIT NESTOR : je propose cette fonction là pour corriger le problème *)
+(* EDIT GUILLAUME : niveau complexité c'est potentiellement un peu moins bien (on parcours obligatoirement tout le tableau) mais l'important c'est que ça marche *)
+let index_vect2 t a =
+  let n = vect_length t in
+  let ind = ref 0 in
+  for i = 1 to n
+  do
+    if t.(n-i) = a then ind := (n-i)
+  done;
+  if t.(!ind) = a then !ind
+  else failwith "element absent du tableau" 
+    ;;
 
 
 
@@ -173,10 +218,19 @@ let trans_id q a =
    else - 1
 ;;
 
+(* EDIT NESTOR : etats ne devrait pas etre egal à 2 ? mais comme tu disais plus haut, c'est pas bien grave si on utilise la longueur de finals *)
+(* EDIT GUILLAUME : effectivement... *)
+(* EDIT NESTOR : je ne comprends pourquoi si q=1 et a est dans sigma, on valide quand même ...
+                 ca veut dire qu'on reconnait les noms de variables avec n'importe quoi dedans
+                 genre as5+=sd56!! est un nom de variable ? 
+                 je dirais qu'il faut juste accepter les chiffres et les lettres après 
+                 donc avoir :
+                   if (q = 0 && (mem a lettres)) || (q = 1 && ( (mem a lettres) || (mem a chiffres)))  *)
+(* EDIT GUILLAUME : un identifiant en Scheme est juste un suite de charactères de l'alphabet que j'ai défini qui commence par une lettre... Donc oui : as5+=sd56!! est bien un identifiant légal ^^ *) 
 (* automate reconnaissant les identifiants i.e. les noms de variables.
 Ils sont de la forme lettres.(sigma)* *)
 let id = {
-      etats = 1;
+      etats = 2;
       transition = trans_id;
       finals = [|false; true|] ;
       lexeme = "ID"
@@ -184,9 +238,35 @@ let id = {
 ;;
 
 
+(* EDIT NESTOR : je ne suis pas sur mais je pense qu'on peut économiser un état.
+                 On enlève le 6 et on met le 5 qui boucle sur lui meme si a est un chiffre.
+                 Donc on enlève l'avant dernière ligne et on remplace celle d'avant par :
+                     else if (q = 3 && a = `.`) || (q = 5 && ch) then 5
+   je pense qu'on obtient la meme chose mais a verifier *)
+(* RE-EDIT NESTOR : je pense qu'on peut meme le faire en 4 états : *)
+
+let trans_nb2 q a =
+  let ch = mem a chiffres in
+  if q = 0 && a = `-` then 1
+  else if q = 0 && ch then 2
+  else if q = 1 && ch then 1
+  else if q = 2 && ch then 2 (* EDIT GUILLAUME : il y a deux fois le même test... *)
+  else if q = 2 && ch then 3 (* EDIT GUILLAUME : plutôt : if q = 3 non ? *) 
+  else if (q=0 || q=1 || q=2) && a = `.` then 3
+  else -1 (* EDIT GUILLAUME : j'ai aussi rajouté cette ligne *)
+;;
+(* EDIT GUILLAUME : il me semble que cet automate reconnaitrait "." comme étant un nombre... à voir *)
+let nb2 = { etats = 4 ;
+	    transition = trans_nb2 ;
+	    finals = [| false; true; true; true |] ;
+	    lexeme = "NB" }
+;;
+(* EDIT NESTOR : a voir si ca marche, a priori en dessinant l'automate ca marche *)
+
+  
 (* fonction de transition de l'automate nb, renvoie -1 si l'automate bloque *)
 let trans_nb q a =
-let ch = mem a chiffres in
+  let ch = mem a chiffres in
    if q = 0 && a = `-` then 1
    else if (q = 0 or q = 1) && (a = `.`) then 2
    else if (q = 0 or q = 1 or q=3) && ch then 3
@@ -210,17 +290,17 @@ let nb = {
       lexeme = "NB"
    }
 ;;
-(* Exemples :
-reconnait nb "98635";;
-reconnait nb "-546";;
-reconnait nb "849.84635";;
-reconnait nb "-484.446";;
-reconnait nb "8476.";;
-reconnait nb "-8448.";;
-reconnait nb ".8965";;
-reconnait nb "-.8845";;
-reconnait nb ".";;
-reconnait nb "-8845f846";; *)
+(* Exemples : *)
+reconnait nb2 "98635";;
+reconnait nb2 "-546";;
+reconnait nb2 "849.84635";;
+reconnait nb2 "-484.446";;
+reconnait nb2 "8476.";;
+reconnait nb2 "-8448.";;
+reconnait nb2 ".8965";;
+reconnait nb2 "-.8845";;
+reconnait nb2 ".";;
+reconnait nb2 "-8845f846";; 
 
 
 
@@ -362,10 +442,9 @@ let traitement liste chaine =
 let analyse_lexicale chaine =
    traitement (anallex chaine) (strip chaine)
 ;;
-(* Exemple : 
+ 
 let chaîne =  "(define ab (+ 5 3))" ;;
 analyse_lexicale chaîne ;;
-*)
 
 
 
